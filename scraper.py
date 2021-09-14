@@ -1,24 +1,29 @@
 import requests
 from bs4 import BeautifulSoup
 
-page = requests.get("https://carros.tucarro.com.co/_Desde_145")
 
-soup = BeautifulSoup(page.content, 'html.parser')
+for year in range(2000, 2010):
 
-[x.extract() for x in soup.findAll('script')]
+    print("###############" + str(year) + "################")
 
-print(page)
-print(soup.prettify())
+    for num in range(0, 2000, 47):
 
-for link in soup.select('a[class="ui-search-result__content ui-search-link"]'):
-    print(link['href'])
-    
-    car_page = requests.get(link['href'])
-    car_soup = BeautifulSoup(car_page.content, 'html.parser')
-    [x.extract() for x in car_soup.findAll('script')]
-    print(car_soup.prettify() + "######################")
+            print("&&&&&&&&&&&&&&&&&&&&" + str(num) + "&&&&&&&&&&&&&&&&&&&&&&")
 
-    for value in car_soup.select('span[class="andes-table__column--value"]'):
-        print(value.text)
+            page = requests.get(f"https://carros.tucarro.com.co/{year}/_Desde_{num}")
+            soup = BeautifulSoup(page.content, 'html.parser')
 
-    break
+            for link in soup.select('a[class="ui-search-result__content ui-search-link"]'):
+                
+                car_page = requests.get(link['href'])
+                car_soup = BeautifulSoup(car_page.content, 'html.parser')
+
+                for title in car_soup.select('h1[class="ui-pdp-title"]'):
+                    print(title.text)
+
+                for value in car_soup.select('span[class="andes-table__column--value"]'):
+                    print(value.text)
+
+                for price in car_soup.select('span[class="price-tag-fraction"]'):
+                    print(price.text)
+
