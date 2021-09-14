@@ -5,16 +5,16 @@ import pandas as pd
 browser = start_firefox(headless = True)
 
 #columnsname = ['NOMBRE', 'SUBTITULO', 'PRECIO', 'PRECIO MENSUAL', 'KILOMETRAJE', 'ANIO', 'ESTADO', 'UBICACIÓN', 'PLACA', 'TIPO DE CAJA', 'CILINDRAJE', 'COMBUSTIBLE',  'COLOR', 'AIRBAGS', 'DIRECCIÓN', 'CARROCERÍA', 'PUERTAS']
-columnsname = ['NOMBRE', 'SUBTITULO', 'PRECIO', 'PRECIO MENSUAL', 'KILOMETRAJE', 'ANIO', 'TIPO DE CAJA', 'CILINDRAJE', 'COMBUSTIBLE', 'COLOR', 'ESTADO', 'UBICACIÓN', 'DIRECCIÓN', 'PLACA', 'PUERTAS', 'AIRBAGS', 'CARROCERÍA', 'GARANTÍA', 'LUGAR DE ENSAMBLAJE']
+columnsname = ['NOMBRE', 'SUBTITULO', 'PRECIO', 'PRECIO MENSUAL', 'KILOMETRAJE', 'ANIO', 'TIPO DE CAJA', 'CILINDRAJE', 'COMBUSTIBLE', 'COLOR', 'ESTADO', 'UBICACIÓN', 'DIRECCIÓN', 'PLACA', 'PUERTAS', 'AIRBAGS']
 allCars = []
 
-for x in range(1, 2):
+for x in range(1, 10):
     url = 'https://www.carroya.com/resultados/automoviles-y-camionetas?page=' + str(x)
     go_to(url)
     soup = BeautifulSoup(browser.page_source, 'html.parser')
     cars = soup.find_all('div', class_='contentCurrentCard')
 
-    for y in range(len(cars)):
+    for y in range(3,len(cars)):
         try:
             car = cars[y]
             carTemp = {}
@@ -43,12 +43,15 @@ for x in range(1, 2):
             
             for c in range(len(names)):
                 if names[c].text in set(columnsname):
-                    carTemp[names[c].text] = descriptions[c].text
+                    carTemp[names[c].text] = str(descriptions[c].text)
 
             allCars.append(carTemp)
-            print("PAG "+str(x)+", CAR "+str(1+y))
+            print("PAG "+str(x)+", CAR "+str(y-2))
         except AttributeError:
             print("INVALID - PAG "+str(x)+", CAR "+str(1+y))
+
+for c in allCars:
+    print(c.keys())
 
 pd.DataFrame.from_dict(data=allCars, orient='columns').to_csv('data.csv', header=True)
 
