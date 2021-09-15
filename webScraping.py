@@ -4,10 +4,11 @@ from helium import *
 from bs4 import BeautifulSoup
 import pandas as pd
 import multiprocessing as mp
+import requests
 
 #--------------------Constants--------------------
 THREAD_QUANTITY = int(mp.cpu_count()/2) #Change to apply a different number of threads
-PAGE_QUANTITY = 688 #688 is the actual number of pages in this website
+PAGE_QUANTITY = 2 #688 is the actual number of pages in this website
 
 #--------------------Methods--------------------
 def get_data(columnsname, threadNumber):
@@ -68,11 +69,17 @@ def get_data(columnsname, threadNumber):
 
     return allCars
 
-def download_img(x, y, z):
-    print(x + '-' + y + '-' + str(z))
+def download_img(name, image, index):
+    print(str(index) + '_' + name)
+    response = requests.get(image)
+    
+    file = open('images/' + str(index) + '_' + name + '.jpg', 'wb')
+    file.write(response.content)
+    response.close()
+    file.close()
 
 def load_img():
-    df = pd.read_csv('data.csv')
+    df = pd.read_csv('carroya_data.csv')
     for x, y, z in zip(df['NOMBRE'], df['IMAGEN'], df['Unnamed: 0']):
         download_img(x, y, z)
 
@@ -91,4 +98,6 @@ if __name__ == "__main__":
     for c in carsMatrix:
         allCars += c
     
-    pd.DataFrame.from_dict(data=allCars, orient='columns').to_csv('data.csv', header=True)
+    pd.DataFrame.from_dict(data=allCars, orient='columns').to_csv('carroya_data.csv', header=True)
+
+load_img()
