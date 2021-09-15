@@ -8,7 +8,7 @@ import requests
 
 #--------------------Constants--------------------
 THREAD_QUANTITY = int(mp.cpu_count()/2) #Change to apply a different number of threads
-PAGE_QUANTITY = 2 #688 is the actual number of pages in this website
+PAGE_QUANTITY = 688 #688 is the actual number of pages in this website
 
 #--------------------Methods--------------------
 def get_data(columnsname, threadNumber):
@@ -69,7 +69,7 @@ def get_data(columnsname, threadNumber):
 
     return allCars
 
-def download_img(name, image, index):
+def download_img(name, image, index):#Deberiamos Quitar el nombre
     print(str(index) + '_' + name)
     response = requests.get(image)
     
@@ -78,16 +78,19 @@ def download_img(name, image, index):
     response.close()
     file.close()
 
-def load_img():
+def load_img(threadNumber):
     df = pd.read_csv('carroya_data.csv')
-    for x, y, z in zip(df['NOMBRE'], df['IMAGEN'], df['Unnamed: 0']):
-        download_img(x, y, z)
+    for x in range(threadNumber, len(df), THREAD_QUANTITY):
+        download_img(df['NOMBRE'].values[x], df['IMAGEN'].values[x], df['Unnamed: 0'].values[x])
+    # for x, y, z in zip(df['NOMBRE'], df['IMAGEN'], df['Unnamed: 0']):
+    #     download_img(x, y, z)
 
 if __name__ == "__main__":
     #--------------------Logic--------------------
-    columnsname = ['NOMBRE', 'SUBTITULO', 'PRECIO', 'PRECIO MENSUAL', 'KILOMETRAJE', 'ANIO', 'TIPO DE CAJA', 'CILINDRAJE', 'COMBUSTIBLE', 'COLOR', 'ESTADO', 'UBICACIÓN', 'DIRECCIÓN', 'PLACA', 'PUERTAS', 'AIRBAGS', 'IMAGEN']
-
     pool = Pool(THREAD_QUANTITY)
+
+    #CSV
+    columnsname = ['NOMBRE', 'SUBTITULO', 'PRECIO', 'PRECIO MENSUAL', 'KILOMETRAJE', 'ANIO', 'TIPO DE CAJA', 'CILINDRAJE', 'COMBUSTIBLE', 'COLOR', 'ESTADO', 'UBICACIÓN', 'DIRECCIÓN', 'PLACA', 'PUERTAS', 'AIRBAGS', 'IMAGEN']
     
     tuples = []
     for t in range(1, THREAD_QUANTITY + 1):
@@ -100,4 +103,6 @@ if __name__ == "__main__":
     
     pd.DataFrame.from_dict(data=allCars, orient='columns').to_csv('carroya_data.csv', header=True)
 
-load_img()
+    #IMG
+    with pool as p:
+        p.map(load_img, range(1, THREAD_QUANTITY + 1))
