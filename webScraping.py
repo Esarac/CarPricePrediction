@@ -1,5 +1,6 @@
 from multiprocessing import Pool
 from time import sleep
+from requests_html import HTMLSession
 from helium import *
 from bs4 import BeautifulSoup
 import pandas as pd
@@ -8,7 +9,7 @@ import requests
 
 #--------------------Constants--------------------
 THREAD_QUANTITY = int(mp.cpu_count()/2) #Change to apply a different number of threads
-PAGE_QUANTITY = 1 #688 is the actual number of pages in this website
+PAGE_QUANTITY = 4 #688 is the actual number of pages in this website
 
 #--------------------Methods--------------------
 def get_data(columnsname, threadNumber):
@@ -19,9 +20,11 @@ def get_data(columnsname, threadNumber):
 
     for x in range(threadNumber, (PAGE_QUANTITY + 1), THREAD_QUANTITY):
         url = 'https://www.carroya.com/resultados/automoviles-y-camionetas?page=' + str(x)
+
         go_to(url)
-        soup = BeautifulSoup(browser.page_source, 'html.parser')
         sleep(3)
+        soup = BeautifulSoup(browser.page_source, 'html.parser')
+        Button('Download').exists
         cars = soup.find_all('div', class_='contentCurrentCard')
 
         for y in range(3,len(cars)):
@@ -41,9 +44,11 @@ def get_data(columnsname, threadNumber):
 
                 #Car Detail Page
                 detailUrl = 'https://www.carroya.com' + car.find('a', href = True)['href']
+
                 go_to(detailUrl)
-                detail = BeautifulSoup(browser.page_source, 'html.parser')
                 sleep(1)
+                detail = BeautifulSoup(browser.page_source, 'html.parser')
+                
                 features = detail.find('div', class_='features')
 
                 names = features.find_all('h5', class_='name')
@@ -88,7 +93,7 @@ if __name__ == "__main__":
     #--------------------Logic--------------------
     pool = Pool(THREAD_QUANTITY)
 
-    #CSV
+    # CSV
     columnsname = ['NOMBRE', 'SUBTITULO', 'PRECIO', 'PRECIO MENSUAL', 'KILOMETRAJE', 'ANIO', 'TIPO DE CAJA', 'CILINDRAJE', 'COMBUSTIBLE', 'COLOR', 'ESTADO', 'UBICACIÓN', 'DIRECCIÓN', 'PLACA', 'PUERTAS', 'AIRBAGS', 'IMAGEN']
     
     tuples = []
