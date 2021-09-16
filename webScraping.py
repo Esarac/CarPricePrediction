@@ -8,7 +8,7 @@ import requests
 
 #--------------------Constants--------------------
 THREAD_QUANTITY = int(mp.cpu_count()/2) #Change to apply a different number of threads
-PAGE_QUANTITY = 688 #688 is the actual number of pages in this website
+PAGE_QUANTITY = 1 #688 is the actual number of pages in this website
 
 #--------------------Methods--------------------
 def get_data(columnsname, threadNumber):
@@ -69,21 +69,20 @@ def get_data(columnsname, threadNumber):
 
     return allCars
 
-def download_img(name, image, index):#Deberiamos Quitar el nombre
-    print(str(index) + '_' + name)
+def download_img(image, index):
     response = requests.get(image)
     
-    file = open('images/' + str(index) + '_' + name + '.jpg', 'wb')
+    file = open('images/' + str(index) + '.jpg', 'wb')
     file.write(response.content)
     response.close()
     file.close()
 
+    print("IMG "+ str(index))
+
 def load_img(threadNumber):
     df = pd.read_csv('carroya_data.csv')
     for x in range(threadNumber, len(df), THREAD_QUANTITY):
-        download_img(df['NOMBRE'].values[x], df['IMAGEN'].values[x], df['Unnamed: 0'].values[x])
-    # for x, y, z in zip(df['NOMBRE'], df['IMAGEN'], df['Unnamed: 0']):
-    #     download_img(x, y, z)
+        download_img(df['IMAGEN'].values[x], df['Unnamed: 0'].values[x])
 
 if __name__ == "__main__":
     #--------------------Logic--------------------
@@ -96,7 +95,13 @@ if __name__ == "__main__":
     for t in range(1, THREAD_QUANTITY + 1):
         tuples.append((columnsname, t))
 
-    carsMatrix = pool.starmap(get_data, tuples)
+    #starMap~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    cMap = pool.starmap_async(get_data, tuples)
+    carsMatrix = cMap.get()
+
+    #carsMatrix = pool.starmap(get_data, tuples)
+    #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
     allCars = []
     for c in carsMatrix:
         allCars += c
