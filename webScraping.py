@@ -5,14 +5,17 @@ from bs4 import BeautifulSoup
 import pandas as pd
 import multiprocessing as mp
 import requests
+import shutil
+import os
 
 # --------------------Constants--------------------
-THREAD_QUANTITY = int(mp.cpu_count() / 4)  # Change to apply a different number of threads
-PAGE_QUANTITY = 688  # 688 is the actual number of pages in this website
+COLUMNS_NAME = ['NOMBRE', 'SUBTITULO', 'PRECIO', 'PRECIO MENSUAL', 'KILOMETRAJE', 'ANIO', 'TIPO DE CAJA', 'CILINDRAJE', 'COMBUSTIBLE', 'COLOR', 'ESTADO', 'UBICACIÓN', 'DIRECCIÓN', 'PLACA', 'PUERTAS', 'AIRBAGS', 'ID']
+THREAD_QUANTITY = 4 #int(mp.cpu_count() / 2)  # Change to apply a different number of threads
+PAGE_QUANTITY = 688 # 688 is the actual number of pages in this website
 
 
 # --------------------Methods--------------------
-def get_data(columnsname, threadNumber):
+def get_data(threadNumber):
     errors = 0
     browser = start_firefox(headless=True)
     allCars = []
@@ -31,7 +34,7 @@ def get_data(columnsname, threadNumber):
                 car = cars[y]
                 carTemp = {}
 
-                for g in columnsname:
+                for g in COLUMNS_NAME:
                     carTemp[g] = ''
 
                 # Data
@@ -39,7 +42,7 @@ def get_data(columnsname, threadNumber):
                 carTemp['SUBTITULO'] = car.find('h4', class_='subtitleCard').text
                 carTemp['PRECIO'] = car.find('h2', class_='h2P priceCard').text
                 carTemp['PRECIO MENSUAL'] = car.find('h3', class_='mounthlyPriceCard').text
-                carTemp['IMAGEN'] = car.find('img', class_='imageCard')['src']
+                carTemp['ID'] = str(x) +"_"+str(y - 2)
 
                 # Car Detail Page
                 detailUrl = 'https://www.carroya.com' + car.find('a', href=True)['href']
@@ -58,69 +61,55 @@ def get_data(columnsname, threadNumber):
                 carTemp['ANIO'] = detail.find('h3', class_='h3P year').text
 
                 for c in range(len(names)):
-                    if names[c].text in set(columnsname):
+                    if names[c].text in set(COLUMNS_NAME):
                         carTemp[names[c].text] = str(descriptions[c].text)
 
                 allCars.append(carTemp)
-                print("PAG " + str(x) + ", CAR " + str(y - 2))  # Print actual car
-            except AttributeError:
-                print("INVALID - PAG " + str(x) + ", CAR " + str(1 + y))  # Print actual cars (invalid)
-                errors = errors + 1
 
-    print("Thread " + str(threadNumber) + " errors: " + str(errors))  # Print errors in thread
+                # Download Image
+                download_img(car.find('img', class_='imageCard')['src'], carTemp['ID'])
+                
+                # Print
+                print("PAG " + str(x) + ", CAR " + str(y - 2))
+            except:
+                #Print
+                print("ERROR - PAG " + str(x) + ", CAR " + str(1 + y))
+                errors = errors + 1
+    #Print
+    print("Thread " + str(threadNumber) + " errors: " + str(errors))
 
     kill_browser()
 
     return allCars
 
 
-def download_img(image, index):
+def download_img(image, id):
     try:
         response = requests.get(image)
 
-        file = open('images/' + str(index) + '.jpg', 'wb')
+        file = open('images/' + str(id) + '.jpg', 'wb')
         file.write(response.content)
         response.close()
         file.close()
 
-        print("IMG " + str(index))
+        #Print
+        print("IMG " + str(id))
     except:
-        print("IMG ERROR" + str(index))
-
-
-def load_img(threadNumber):
-    df = pd.read_csv('carroya_data.csv')
-    for x in range(threadNumber, len(df), THREAD_QUANTITY):
-        download_img(df['IMAGEN'].values[x], df['Unnamed: 0'].values[x])
-
+        #Print
+        print("ERROR - IMG" + str(id))
 
 if __name__ == "__main__":
     # --------------------Logic--------------------
     pool = Pool(THREAD_QUANTITY)
 
-    # CSV
-    columnsname = ['NOMBRE', 'SUBTITULO', 'PRECIO', 'PRECIO MENSUAL', 'KILOMETRAJE', 'ANIO', 'TIPO DE CAJA', 'CILINDRAJE', 'COMBUSTIBLE', 'COLOR', 'ESTADO', 'UBICACIÓN', 'DIRECCIÓN', 'PLACA', 'PUERTAS', 'AIRBAGS', 'IMAGEN']
-
-    tuples = []
-    for t in range(1, THREAD_QUANTITY + 1):
-        tuples.append((columnsname, t))
-
-    #starMap~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    cMap = pool.starmap_async(get_data, tuples)
+    # CSV & IMG
+    shutil.rmtree('images')
+    os.mkdir('images')
+    cMap = pool.map_async(get_data, range(1, THREAD_QUANTITY + 1))
     carsMatrix = cMap.get()
-
-    #carsMatrix = pool.starmap(get_data, tuples)
-    #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     allCars = []
     for c in carsMatrix:
         allCars += c
 
     pd.DataFrame.from_dict(data=allCars, orient='columns').to_csv('carroya_data.csv', header=True)
-
-    # IMG
-
-
-    with pool as p:
-        p.map_async(load_img, range(1, THREAD_QUANTITY + 1)).get()
-
