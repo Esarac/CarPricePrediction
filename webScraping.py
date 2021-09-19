@@ -1,3 +1,12 @@
+"""Web scraping script
+
+This script allows the user to scrape data from https://carroya.com using helium and BeautifulSoup. 
+For efficiency, this script can run using multiple threads (The number of threads used is defined by 
+the constant THREAD_QUANTITY) and uses pandas to export the data obtained on a CSV file.
+
+The script requires the browser Firefox installed on the machine.
+"""
+
 from multiprocessing import Pool
 from time import sleep
 from helium import *
@@ -16,6 +25,18 @@ PAGE_QUANTITY = 688 # 688 is the actual number of pages in this website
 
 # --------------------Methods--------------------
 def get_data(threadNumber):
+    """
+    Goes to https://carroya.com and start scraping the information of the cars 
+    page by page until the last one. Access the detail page of each car and store 
+    the data obtained on a dictionary. Downloads the image of the car calling 
+    the function download_img(). Finally, store each dict in a list and returns it.
+
+    Args:
+        threadNumber (int): The number of threads that the algorithm is going to use.
+    
+    Returns:
+        list: A list of dict containing the data obtained from the website.
+    """
     errors = 0
     browser = start_firefox(headless=True)
     allCars = []
@@ -84,6 +105,13 @@ def get_data(threadNumber):
 
 
 def download_img(image, id):
+    """
+    Downloads an image using the provided URL and the name.
+
+    Args:
+        image (str): The url of the image to download.
+        id (str): The name of the image.
+    """
     try:
         response = requests.get(image)
 
