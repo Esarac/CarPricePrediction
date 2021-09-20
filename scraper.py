@@ -5,7 +5,22 @@ import unidecode
 from bs4 import BeautifulSoup
 from multiprocessing import Pool
 
+"""
+This module will scrape the website tucarro.com.co to get all the cars' relevant information
+"""
+
 def car_scraper(year_start, year_end):
+
+    """
+    Gets all the information for all the cars in the given year range 
+
+    Parameters:
+    year_start(int): The script will save all the cars' data beginning with this year
+    year_end(int): The script will stop saving the cars' data when it reaches this year
+
+    Returns:
+    data(List): A list of dictionaries. Each dictionary contains the data of a particular car
+    """
 
     data = []
 
@@ -51,6 +66,12 @@ def car_scraper(year_start, year_end):
     return data
 
 def create_csv():
+
+    """
+    Uses parallel processing to create a csv file containing the data of all the cars in the webiste. The csv file contains the following columns:
+    ['Titulo', 'Marca', 'Modelo', 'Ano', 'Color','Tipo de combustible', 'Puertas', 'Transmision', 'Motor', 'Tipo de carroceria', 'Kilometros', 'Img', 'Precio']
+    """
+
     pool = Pool(4)
 
     result = pool.starmap(car_scraper, [(1938, 1958), (1958, 1978), (1978, 1998), (1998, 2008), (2008, 2010), (2010, 2014), (2014, 2018), (2018, 2020), (2020, 2022)])
