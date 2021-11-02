@@ -64,7 +64,6 @@ Honda
 BMW
 Ford
 Dodge
-Humer
 Holden
 Bristol
 Porsche
