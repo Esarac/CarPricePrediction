@@ -7,32 +7,20 @@ from sklearn import metrics
 from sklearn.model_selection import train_test_split
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.ensemble import RandomForestRegressor
+from sklearn import preprocessing
 
 import xgboost as xgb
 
-df = pd.read_csv('full_data.csv')
-
-df['Kilometros'] = df['Kilometros'].fillna('-1')
-df['Kilometros'] = df['Kilometros'].astype(int)
-df = df[df['Kilometros'] > 0]
-df = df.fillna('NA')
-
-df = df[df['Precio'] < 200000000]
-
-df['Marca'] = df['Marca'].apply(lambda str : str.upper())
-df['Modelo'] = df['Modelo'].apply(lambda str : str.upper())
-
-
-df = df[df['Precio'] > 3000000]
-
-print(df.info())
-
+"""
+This module creates a Random Forest Regressor model to predict the car prices.
+Input: a CSV with the car data. 
+The CSV MUST contain the following labels: Marca, Modelo, Anio, Tipo de carroceria, Tipo de combustible, Color
+"""
+df = pd.read_csv('full_data_final.csv')
 y = df.Precio
 
-
-atributos = ['Marca', 'Modelo','Anio', 'Kilometros', 'Color', 'Transmision', 'Tipo de combustible', 'Puertas', 'Motor']
-
-# atributos = ['Marca', 'Modelo','Anio', 'Kilometros']
+# atributos = ['Marca', 'Modelo','Anio', 'Kilometros', 'Color', 'Transmision', 'Tipo de combustible', 'Puertas', 'Motor']
+atributos = ['Marca', 'Modelo','Anio', 'Kilometros', 'Category']
 
 X = df[atributos]
 
@@ -42,7 +30,7 @@ train_x, val_x, train_y, val_y = train_test_split(X, y, test_size = 0.33, random
 
 print(train_x.head())
 
-model = RandomForestRegressor(random_state=1, n_estimators=32, verbose=10)
+model = RandomForestRegressor(random_state=1, n_estimators=16, verbose=10, n_jobs=-1)
 model.fit(train_x, train_y)
 
 val_pred = model.predict(val_x)
@@ -58,7 +46,7 @@ y2 = val_y[:90]
 plt.plot(x1, y1)
 plt.plot(x1, y2)
 plt.show()
-plt.savefig('out.png')
+plt.savefig('out_modelo3.png')
 
 print(len(val_y))
 print(f"MAE: {val_mae}")
